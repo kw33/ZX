@@ -90,6 +90,29 @@ load:
     ; в l - контрольную сумму
     jr .enter
 
+    ;============================================================ errors:
+.nc1:
+	jp z,.waitpilot ; over/under
+	; break
+.break:
+	ei     ;;; EI
+	ld a,(BORDCR)
+	rrca
+	rrca
+	rrca
+	out (254),a
+	ld iy,5C3Ah ; на всякий=)      HL' ?
+	ret
+
+.err:
+	jr nz,.break
+	ld a,6
+	out (254),a				    ; ? ? ?   ?? ???
+       jp .quants				    ; ? ? ?   ?? ???
+	ei
+	ret ; надо перейти на восстановление регистров (iy hl')
+    ;============================================================ errors end
+
 .quants:
     call measu_p ; положительный
     jr nc,.err
@@ -168,32 +191,13 @@ load:
 finish:
     ex af,af' ; вернули считанный с ленты crc
     xor c     ; равны ли полученный и рассчитанный crc
-    ;exx       ; ?
-    jr nz,err
+    ;exx       ; ?                                                    ? ? ?
+    jr nz,error
 
     ret
 
     ;---------------------------------------------------------------------------
-.nc1:
-    jp z,.waitpilot ; over/under
-    ; break
-.break:
-    ei	   ;;; EI
-    ld a,(BORDCR)
-    rrca
-    rrca
-    rrca
-    out (254),a
-    ld iy,5C3Ah ; на всякий=)      HL' ?
-    ret
 
-.err:
-    jr nz,.break
-    ld a,6
-    out (254),a 				; ? ? ?   ?? ???
-   jp .quants					; ? ? ?   ?? ???
-    ei
-    ret ; надо перейти на восстановление регистров (iy hl')
 
 
 ;$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
