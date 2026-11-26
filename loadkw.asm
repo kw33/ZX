@@ -27,7 +27,13 @@ nulling:
     ld hl,22 ; длина заголовка
     call load
     ; проверяем флаги
-    ;...
+    ret c ; ok
+    ld a, 6
+    out (#FE),a
+    ret z ; error
+    ; ZF=0
+    ld a,1
+    out (#FE),a
     ret
 
 ;----------------------------------------------
@@ -100,21 +106,23 @@ load:
     ;============================================================ errors:
 .nc1:
 	jp z,.waitpilot ; over/under
-	; break
-.break:
+	; break Z=0, C=0
+.exit:			; должно быть CF=0, а ZF = 0-break, 1-error
+	push af
 	ei     ;;; EI
 	ld a,(BORDCR)
 	rrca
 	rrca
 	rrca
 	out (254),a
+	pop af
 	ld iy,5C3Ah ; на всякий=)
 	pop hl
 	exx ; восстановили системный HL'
 	ret
 
-.err:
-	jr nz,.break
+.err:	; CF=0
+	jr nz,.exit
 	ld a,6
 	out (254),a				    ; ? ? ?   ?? ???
 	ei
