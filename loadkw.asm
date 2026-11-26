@@ -58,6 +58,7 @@ load:
     rrca
     rrca
     rrca
+    push af ; сохранили цвет исходного поребрика
     ; при начальном ожидании пилота - не полосим
     exx
     ld d,a
@@ -96,7 +97,7 @@ load:
     ld d,a ; push
     ld a,%10101010 ; прокручивая, будем получать то 1, то 0 в CF
     ld e,a	   ; флаг для счёта полубайтов
-    sub a ; a=0
+    sub a  ; a=0
     ld l,a
     ld a,d ; pop
     ; в h храним старший полубайт принимаемых данных
@@ -105,28 +106,17 @@ load:
 
     ;============================================================ errors:
 .nc1:
-	jp z,.waitpilot ; over/under
+	jr z,.waitpilot ; over/under
 	; break Z=0, C=0
-.exit:			; должно быть CF=0, а ZF = 0-break, 1-error
-	push af
-	ei     ;;; EI
-	ld a,(BORDCR)
-	rrca
-	rrca
-	rrca
+.exit:	; CF=1-ok, {CF=0-break/error, а ZF = 0-break, 1-error}
+	pop bc ; (af) восстановили цвет исходного поребрика  не изменяя флаг
+	ld a,b
 	out (254),a
-	pop af
 	ld iy,5C3Ah ; на всякий=)
 	pop hl
 	exx ; восстановили системный HL'
+	ei     ;;; EI
 	ret
-
-.err:	; CF=0
-	jr nz,.exit
-	ld a,6
-	out (254),a				    ; ? ? ?   ?? ???
-	ei
-	ret ; надо перейти на восстановление регистров (iy hl')
 
 .error:
 	jp .error
@@ -135,7 +125,7 @@ load:
 
 .quants:
     call measu_p ; положительный
-    jr nc,.err
+    jr nc,.exit ; err / break
 
 .enter:
  ;     ld (ix),a     ; 1111 импульс
@@ -155,7 +145,7 @@ load:
 
     ; мерим длительность отрицательного импульса
     call measu_n
-    jr nc,.err ;                                   ??
+    jr nc,.exit ; err / break
  ;        ld (ix),a     ; 0000 импульс
  ;        inc ix
     ; преобразовать длительность в id импульса
