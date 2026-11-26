@@ -53,13 +53,15 @@ load:
     di
     exx ; теперь HL стал HL' (как и BC DE)
     push hl ; cохранили системный HL'
-.waitpilot:
     ld a,(BORDCR)
     rrca
     rrca
     rrca
     push af ; сохранили цвет исходного поребрика
+.waitpilot:
     ; при начальном ожидании пилота - не полосим
+    pop af  ; взяли
+    push af ; вернули
     exx
     ld d,a
     ld e,a ; одинаковые цвета, равны системному поребрику
@@ -69,7 +71,7 @@ load:
 .cnt:
     ; прожуём отрицательный импульс
     call measu_n
-    jr nc,.nc1	; не надо ? ? ?
+    jr nc,.nc1 ;                                         не надо ? ? ?
       ;ld (ix),a
       ;inc ix ; CF not changed
     ; будем контролировать положительный
